@@ -55,32 +55,37 @@ pub struct LineStyles
     pub text: Style,
     pub plaintext: Style,
 }
-
 impl LineStyles 
 {
     pub fn new() -> Self 
     {
         let heading_one_style = Style::new()
-                .fg(Color::Rgb(128, 64, 32))
-                .bg(Color::Rgb(16,  32, 32));
+                .fg(Color::Rgb(160, 192, 112))
+                .bg(Color::Rgb(  0,   0,   0));
+
         let heading_two_style = Style::new()
-                .fg(Color::Rgb(128, 64, 32))
-                .bg(Color::Rgb(16,  32, 32));
+                .fg(Color::Rgb(160, 192, 112))
+                .bg(Color::Rgb(  0,   0,   0));
+
         let heading_three_style = Style::new()
-                .fg(Color::Rgb(128, 64, 32))
-                .bg(Color::Rgb(16,  32, 32));
+                .fg(Color::Rgb(160, 192, 112))
+                .bg(Color::Rgb(  0,   0,   0));
+
         let link_style = Style::new()
-                .fg(Color::Rgb(128, 64, 32))
-                .bg(Color::Rgb(16,  32, 32));
+                .fg(Color::Rgb(160, 192, 112))
+                .bg(Color::Rgb(  0,   0,   0));
+
         let text_style = Style::new()
-                .fg(Color::Rgb(128, 64, 32))
-                .bg(Color::Rgb(16,  32, 32));
+                .fg(Color::Rgb(160, 192, 112))
+                .bg(Color::Rgb(  0,   0,   0));
+
         let list_style = Style::new()
-                .fg(Color::Rgb(128, 64, 32))
-                .bg(Color::Rgb(16,  32, 32));
+                .fg(Color::Rgb(160, 192, 112))
+                .bg(Color::Rgb(  0,   0,   0));
+
         let quote_style = Style::new()
-                .fg(Color::Rgb(128, 64, 32))
-                .bg(Color::Rgb(16,  32, 32));
+                .fg(Color::Rgb(160, 192, 112))
+                .bg(Color::Rgb(  0,   0,   0));
 
         Self {
             heading_one:   heading_one_style,
@@ -97,6 +102,7 @@ impl LineStyles
 }
 
 
+
 #[derive(Clone, Debug)]
 pub enum Message 
 {
@@ -107,12 +113,14 @@ pub enum Message
 }
 
 
+
 #[derive(Clone, Debug)]
 pub enum Address 
 {
     Url(Url), 
     String(String),
 }
+
 
 
 #[derive(Clone, Debug)]
@@ -122,7 +130,6 @@ pub enum Dialog
     Prompt(String, Vec<u8>),
     Message(String),
 }
-
 impl Dialog 
 {
     pub fn init_from_response(status: Status) -> Option<Self> 
@@ -177,41 +184,49 @@ impl Dialog
 }
 
 
+
 #[derive(Clone, Debug)]
 pub struct GemTextSpan<'a> 
 {
     pub source: GemTextLine,
     pub span:   Span<'a>,
 }
-
 impl<'a> GemTextSpan<'a> 
 {
     fn new(text: &GemTextLine, styles: &LineStyles) -> Self 
     {
         let span = match text.clone() 
         {
-            GemTextLine::Text(s) => {
+            GemTextLine::Text(s) => 
+            {
                 Span::from(s).style(styles.text)
             }
-            GemTextLine::HeadingOne(s) => {
+            GemTextLine::HeadingOne(s) => 
+            {
                 Span::from(s).style(styles.heading_one)
             }
-            GemTextLine::HeadingTwo(s) => {
+            GemTextLine::HeadingTwo(s) => 
+            {
                 Span::from(s).style(styles.heading_two)
             }
-            GemTextLine::HeadingThree(s) => {
+            GemTextLine::HeadingThree(s) => 
+            {
                 Span::from(s).style(styles.heading_three)
             }
-            GemTextLine::Link(link) => {
+            GemTextLine::Link(link) => 
+            {
                 Span::from(link.get_text()).style(styles.link)
             }
-            GemTextLine::Quote(s) => {
+            GemTextLine::Quote(s) => 
+            {
                 Span::from(s).style(styles.quote)
             }
-            GemTextLine::ListItem(s) => {
+            GemTextLine::ListItem(s) => 
+            {
                 Span::from(s).style(styles.list_item)
             }
-            GemTextLine::PreFormat(s) => {
+            GemTextLine::PreFormat(s) => 
+            {
                 Span::from(s).style(styles.preformat)
             }
         };
@@ -222,7 +237,15 @@ impl<'a> GemTextSpan<'a>
             span:   span,
         }
     }
+
+    pub fn get_line(&'a self) -> Line<'a>
+    {
+        self.span
+            .to_line()
+            .style(self.span.style)
+    }
 }
+
 
 
 // Implements Widget by parsing ModelText onto a Vec of Spans
@@ -232,7 +255,6 @@ pub struct PlainTextSpan<'a>
     pub source: String,
     pub span:   Span<'a>,
 }
-
 impl<'a> PlainTextSpan<'a> 
 {
     fn new(text: String, styles: &LineStyles) -> Self 
@@ -243,117 +265,150 @@ impl<'a> PlainTextSpan<'a>
             span:   Span::from(text).style(styles.plaintext),
         }
     }
+
+    pub fn get_line(&'a self) -> Line<'a>
+    {
+        self.span
+            .to_line()
+            .style(self.span.style)
+    }
 }
 
 
+
 #[derive(Clone, Debug)]
-pub enum ModelText<'a>
+pub enum ModelTextType<'a>
 {
     GemText(Vec<GemTextSpan<'a>>),
     PlainText(Vec<PlainTextSpan<'a>>),
 }
-
-impl<'a> ModelText<'a>
+impl<'a> ModelTextType<'a> 
 {
-    pub fn plain_text(content: String, styles: &LineStyles) -> Self 
+    pub fn get_lines(&'a self) -> Vec<Line<'a>>
     {
-        let vec = content.lines()
-                .map(
-                    |s| PlainTextSpan::new(s.to_string(), styles))
-                .collect();
-        Self::PlainText(vec)
-    }
-    
-    pub fn init_from_response(status:  Status, 
-                              content: String, 
-                              styles:  &LineStyles) -> Self 
-    {
-        match status 
+        match &self
         {
-            Status::InputExpected(variant, msg) => 
-            {
-                Self::plain_text(content, styles)
+            ModelTextType::GemText(vec) => {
+                vec
+                    .iter()
+                    .map(|gemtext| gemtext.get_line())
+                    .collect()
             }
-            Status::Success(variant, meta) => 
-            {
-                if meta.starts_with("text/") 
-                {
-                    Self::GemText(
-                        GemTextLine::parse_doc(
-                            content
-                                .lines()
-                                .collect()
-                        )
-                        .unwrap()
-                        .iter()
-                        .map(|line| GemTextSpan::new(line, styles))
-                        .collect()
-                    )
-                } 
-                else 
-                {
-                    Self::plain_text("no text".to_string(), styles)
-                }
-            }
-            Status::TemporaryFailure(variant, meta) => 
-            {
-                Self::plain_text(
-                    "Temporary Failure {:?}: {:?}".to_string(), 
-                    styles)
-            }
-            Status::PermanentFailure(variant, meta) => 
-            {
-                Self::plain_text(
-                    "Permanent Failure {:?}: {:?}".to_string(), 
-                    styles)
-            }
-            Status::Redirect(variant, new_url) => 
-            {
-                Self::plain_text(
-                    "Redirect to: {}?".to_string(),
-                    styles)
-            }
-            Status::ClientCertRequired(variant, meta) => 
-            {
-                Self::plain_text(
-                    "Certificate required: {}".to_string(),
-                    styles)
+            ModelTextType::PlainText(vec) => {
+                vec
+                    .iter()
+                    .map(|plaintext| plaintext.get_line())
+                    .collect()
             }
         }
     }
 }
 
+
+#[derive(Clone, Debug)]
+pub struct ModelText<'a>
+{
+    pub text:    ModelTextType<'a>,
+    pub styles:  LineStyles,
+    pub x:       u16,
+    pub y:       u16,
+}
+impl<'a> ModelText<'a> 
+{
+    pub fn plain_text(content: String, styles: &LineStyles) -> Self 
+    {
+        let vec = content
+                .lines()
+                .map(
+                    |s| PlainTextSpan::new(s.to_string(), &styles))
+                .collect();
+
+        let text = ModelTextType::PlainText(vec);
+
+        Self
+        {
+            text: text,
+            styles: styles.clone(),
+            x: 0,
+            y: 0
+        }
+    }
+
+    pub fn init_from_response(status:  Status, 
+                              content: String,
+                              styles:  &LineStyles) -> Self
+    {
+        match status 
+        {
+            Status::InputExpected(variant, msg) => 
+            {
+                Self::plain_text(content, &styles)
+            }
+            Status::Success(variant, meta) => 
+            {
+                if meta.starts_with("text/") 
+                {
+                    Self
+                    {
+                        text: ModelTextType::GemText(
+                                GemTextLine::parse_doc(
+                                    content
+                                        .lines()
+                                        .collect()
+                                )
+                                .unwrap()
+                                .iter()
+                                .map(|line| GemTextSpan::new(line, &styles))
+                                .collect()
+                            ),
+                            styles: styles.clone(),
+                            x: 0,
+                            y: 0,
+                    }
+                } 
+                else 
+                {
+                    Self::plain_text("no text".to_string(), &styles)
+                }
+            }
+            Status::TemporaryFailure(variant, meta) => 
+            {
+                Self::plain_text(
+                    format!("Temporary Failure {:?}: {:?}", variant, meta), 
+                    &styles)
+            }
+            Status::PermanentFailure(variant, meta) => 
+            {
+                Self::plain_text(
+                    format!("Permanent Failure {:?}: {:?}", variant, meta), 
+                    &styles)
+            }
+            Status::Redirect(variant, new_url) => 
+            {
+                Self::plain_text(
+                    format!("Redirect to: {}?", new_url), 
+                    &styles)
+            }
+            Status::ClientCertRequired(variant, meta) => 
+            {
+                Self::plain_text(
+                    format!("Certificate required: {}", meta), 
+                    &styles)
+            }
+        }
+    }
+}
 impl<'a> Widget for &ModelText<'a> 
 {
     fn render(self, area: Rect, buf: &mut Buffer) 
     {
-        let lines: Vec<Line> = match self 
-        {
-            ModelText::GemText(vec) => {
-                vec
-                    .iter()
-                    .map(|gemtext| 
-                        gemtext.span
-                            .to_line()
-                            .style(gemtext.span.style))
-                    .collect()
-            }
-            ModelText::PlainText(vec) => {
-                vec
-                    .iter()
-                    .map(|plaintext| 
-                        plaintext.span
-                            .to_line()
-                            .style(plaintext.span.style))
-                    .collect()
-            }
-        };
-
-        Paragraph::new(lines)
+        Paragraph::new(self.text.get_lines())
             .wrap(Wrap { trim: true })
+            .scroll((self.y, self.x))
             .render(area, buf);
     }
 }
+
 
 
 #[derive(Clone, Debug)]
@@ -362,12 +417,8 @@ pub struct Model<'a>
     pub dialog:  Option<Dialog>,
     pub address: Address,
     pub text:    ModelText<'a>,
-    pub styles:  LineStyles,
     pub quit:    bool,
-    pub x:       u16,
-    pub y:       u16,
 } 
-
 impl<'a> Model<'a>
 {
     pub fn init(_url: &Option<Url>) -> Self 
@@ -377,17 +428,16 @@ impl<'a> Model<'a>
         // return now if no url provided
         let Some(url) = _url else 
         {
+            let text = ModelText::plain_text(
+                    format!("\twelcome\n\twelcome\n\twelcome"), 
+                    &styles);
+
             return Self 
             {
                 address: Address::String(String::from("")),
-                text:    ModelText::plain_text(
-                    "welcome".to_string(), 
-                    &styles),
-                styles:  styles,
-                quit:    false,
+                text:    text,
                 dialog:  None,
-                x:       0,
-                y:       0,
+                quit:    false,
             }
         };
 
@@ -396,54 +446,50 @@ impl<'a> Model<'a>
         // return now if data retrieval fails
         let Ok((header, content)) = util::get_data(&url) else 
         {
+            let text = ModelText::plain_text(
+                    format!("\n\tdata\n\tretrieval\n\tfailed"), 
+                    &styles);
+
             return Self 
             {
                 address: address,
-                text:    ModelText::plain_text(
-                    "data retrieval failed".to_string(),
-                    &styles),
+                text:    text,
                 dialog:  None,
-                styles:  styles,
                 quit:    false,
-                x:       0,
-                y:       0,
             }
         };
 
         // return now if status parsing fails
         let Ok(status) = Status::from_str(&header) else 
         {
+            let text = ModelText::plain_text(
+                    format!("could not parse status"), 
+                    &styles);
+
             return Self 
             {
                 address: address,
-                text:    ModelText::plain_text(
-                    "could not parse status".to_string(),
-                    &styles),
-                styles:  styles,
+                text:    text,
                 dialog:  None,
                 quit:    false,
-                x:       0,
-                y:       0,
             }
         };
 
-        let text   = ModelText::init_from_response(status.clone(), content, &styles);
-        let dialog = Dialog::init_from_response(status);
+        let text = 
+            ModelText::init_from_response(status.clone(), content, &styles);
 
-        // return model
+        let dialog = 
+            Dialog::init_from_response(status);
+
         Self 
         {
             address: address,
             text:    text,
             dialog:  dialog,
-            styles:  styles,
             quit:    false,
-            x:       0,
-            y:       0,
         }
     }
 } 
-
 impl<'a> Widget for &Model<'a> 
 {
     fn render(self, area: Rect, buf: &mut Buffer) 
@@ -478,25 +524,25 @@ pub fn update(model: Model, msg: Message) -> Model
                 {
                     constants::LEFT => 
                     {
-                        if m.x > 0 
+                        if m.text.x > 0 
                         { 
-                            m.x = m.x - 1;
+                            m.text.x = m.text.x - 1;
                         }
                     }
                     constants::UP => 
                     {
-                        if m.y > 0 
+                        if m.text.y > 0 
                         { 
-                            m.y = m.y - 1;
+                            m.text.y = m.text.y - 1;
                         }
                     }
                     constants::RIGHT => 
                     {
-                        m.x = m.x + 1;
+                        m.text.x = m.text.x + 1;
                     }
                     constants::DOWN => 
                     {
-                        m.y = m.y + 1;
+                        m.text.y = m.text.y + 1;
                     }
                     _ => {}
                 }
