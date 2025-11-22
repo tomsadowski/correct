@@ -190,42 +190,33 @@ impl<'a> GemTextSpan<'a>
     {
         let span = match text.clone() 
         {
-            GemTextLine::Text(s) => 
-            {
+            GemTextLine::Text(s) => {
                 Span::from(s).style(styles.text)
             }
-            GemTextLine::HeadingOne(s) => 
-            {
+            GemTextLine::HeadingOne(s) => {
                 Span::from(s).style(styles.heading_one)
             }
-            GemTextLine::HeadingTwo(s) => 
-            {
+            GemTextLine::HeadingTwo(s) => {
                 Span::from(s).style(styles.heading_two)
             }
-            GemTextLine::HeadingThree(s) => 
-            {
+            GemTextLine::HeadingThree(s) => {
                 Span::from(s).style(styles.heading_three)
             }
-            GemTextLine::Link(link) => 
-            {
+            GemTextLine::Link(link) => {
                 Span::from(link.get_text()).style(styles.link)
             }
-            GemTextLine::Quote(s) => 
-            {
+            GemTextLine::Quote(s) => {
                 Span::from(s).style(styles.quote)
             }
-            GemTextLine::ListItem(s) => 
-            {
+            GemTextLine::ListItem(s) => {
                 Span::from(s).style(styles.list_item)
             }
-            GemTextLine::PreFormat(s) => 
-            {
+            GemTextLine::PreFormat(s) => {
                 Span::from(s).style(styles.preformat)
             }
         };
 
-        Self 
-        {
+        Self {
             source: text.clone(),
             span:   span,
         }
@@ -252,8 +243,7 @@ impl<'a> PlainTextSpan<'a>
 {
     fn new(text: String, styles: &LineStyles) -> Self 
     {
-        Self 
-        {
+        Self {
             source: text.clone(),
             span:   Span::from(text).style(styles.plaintext),
         }
@@ -279,8 +269,7 @@ impl<'a> ModelTextType<'a>
 {
     pub fn get_lines(&'a self) -> Vec<Line<'a>>
     {
-        match &self
-        {
+        match &self {
             ModelTextType::GemText(vec) => {
                 vec
                     .iter()
@@ -306,6 +295,7 @@ pub struct ModelText<'a>
     pub size:   Size,
     pub cursor: Position,
     pub scroll: Position,
+    pub vec_idx: u16,
 }
 impl<'a> ModelText<'a> 
 {
@@ -319,13 +309,35 @@ impl<'a> ModelText<'a>
 
         let text = ModelTextType::PlainText(vec);
 
-        Self
-        {
-            text: text,
-            styles: styles.clone(),
-            size:   size,
-            cursor: Position::new(0, 0),
-            scroll: Position::new(0, 0),
+        Self {
+            text:    text,
+            styles:  styles.clone(),
+            size:    size,
+            cursor:  Position::new(0, 0),
+            scroll:  Position::new(0, 0),
+            vec_idx: 0,
+        }
+    }
+
+    pub fn gemtext(content: String, size: Size, styles: &LineStyles) -> Self 
+    {
+        Self {
+            text: ModelTextType::GemText(
+                    GemTextLine::parse_doc(
+                        content
+                            .lines()
+                            .collect()
+                    )
+                    .unwrap()
+                    .iter()
+                    .map(|line| GemTextSpan::new(line, &styles))
+                    .collect()
+                ),
+            styles:  styles.clone(),
+            size:    size,
+            cursor:  Position::new(0, 0),
+            scroll:  Position::new(0, 0),
+            vec_idx: 0,
         }
     }
 
@@ -337,23 +349,7 @@ impl<'a> ModelText<'a>
         match status {
             Status::Success(variant, meta) => {
                 if meta.starts_with("text/") {
-                    Self {
-                        text: ModelTextType::GemText(
-                                GemTextLine::parse_doc(
-                                    content
-                                        .lines()
-                                        .collect()
-                                )
-                                .unwrap()
-                                .iter()
-                                .map(|line| GemTextSpan::new(line, &styles))
-                                .collect()
-                            ),
-                            styles: styles.clone(),
-                            size:   size,
-                            cursor: Position::new(0, 0),
-                            scroll: Position::new(0, 0),
-                    }
+                    Self::gemtext(content, size, &styles)
                 } 
                 else {
                     Self::plain_text(format!("no text"), size, &styles)

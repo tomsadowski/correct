@@ -21,7 +21,6 @@ use std::net::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ParseError;
 
-
 pub fn get_data(url: &url::Url) -> Result<(String, String), String> 
 {
     let host = url.host_str().unwrap_or("");
@@ -44,8 +43,7 @@ pub fn get_data(url: &url::Url) -> Result<(String, String), String>
 
     // get socket address from socket address iterator
     let Some(socket_addr) = addrs_iter.next() 
-        else 
-        {
+        else {
             return Err(format!("Could not connect to {}", urlf))
         };
 
