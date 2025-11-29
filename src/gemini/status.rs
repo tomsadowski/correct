@@ -66,12 +66,30 @@ pub enum ClientCertRequired {
 
 #[derive(Debug, Clone)]
 pub enum Status {
-    InputExpected(Input, String),
-    Success(Success, String),
-    Redirect(Redirect, Url),
-    TemporaryFailure(TemporaryFailure, String),
-    PermanentFailure(PermanentFailure, String),
-    ClientCertRequired(ClientCertRequired, String),
+    InputExpected(
+        Input, 
+        String
+    ),
+    Success(
+        Success, 
+        String
+    ),
+    Redirect(
+        Redirect, 
+        Url
+    ),
+    TemporaryFailure(
+        TemporaryFailure, 
+        String
+    ),
+    PermanentFailure(
+        PermanentFailure, 
+        String
+    ),
+    ClientCertRequired(
+        ClientCertRequired, 
+        String
+    ),
 }
 
 impl Status 

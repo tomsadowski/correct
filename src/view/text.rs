@@ -179,10 +179,16 @@ pub struct ModelText<'a>
     pub size:    Size,
     pub cursor:  Position,
     pub scroll:  Position,
-    pub vec_idx: u16,
+    pub vec_idx: usize,
 }
 impl<'a> ModelText<'a> 
 {
+    pub fn get_gemtext_under_cursor(&'a self) 
+        -> Result<GemTextLine, String> 
+    {
+        self.text.get_gemtext_at(self.vec_idx)
+    }
+
     pub fn plain_text(content: String, size: Size, styles: &LineStyles) -> Self 
     {
         let vec = content

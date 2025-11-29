@@ -24,6 +24,10 @@ use crate::{
         status::{
             Status,
         },
+        gemtext::{
+            GemTextLine,
+            Link,
+        },
     },
 };
 use ratatui::{
@@ -179,7 +183,12 @@ impl<'a> Widget for &Model<'a>
 {
     fn render(self, area: Rect, buf: &mut Buffer) 
     {
-        self.text.render(area, buf);
+        if let Some(dialog) = &self.dialog {
+            dialog.render(area, buf);
+        }
+        else {
+            self.text.render(area, buf);
+        }
     }
 }
 
@@ -195,6 +204,36 @@ pub fn update(model: Model, msg: Message) -> Model
             m.quit = true;
         }
         Message::Enter => {
+            if let Some(dialog) = m.dialog {
+                match dialog.action
+                {
+                    Action::FollowLink(url) => {
+                        // return now if data retrieval fails
+                        if let Ok((header, content)) = util::get_data(&url)
+                        {
+                            if let Ok(status) = Status::from_str(&header) {
+                                m.text = m.text.update_from_response(status, content);
+                            }
+                        }
+                    },
+                    _ => {}
+                }
+                m.dialog = None;
+            }
+            else if let Ok(text) = m.text.get_gemtext_under_cursor() 
+            {
+                match text {
+                    GemTextLine::Link(link) => {
+                        match link {
+                            Link::Gemini(url, _text) => {
+                                m.dialog = Some(Dialog::follow_link(url));
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
+            }
         }
         Message::Escape => { 
             m.dialog = None;
